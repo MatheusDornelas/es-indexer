@@ -1,0 +1,24 @@
+Comandos básicos:
+
+
+curl -XDELETE 'localhost:9200/stats?pretty'
+curl 'localhost:9200/_cat/indices?v'
+curl -XGET '192.168.0.105:9200/stats/events/document/_mapping'
+curl -XPUT 'localhost:9200/stats?pretty=true' -d '{"settings" : {"number_of_shards" : 1, "number_of_replicas" : 0}}'
+curl -XPUT 'http://192.168.0.106:9200/stats/'
+curl -XPUT 'http://192.168.0.106:9200/.kibana/' -d '{"index.mapper.dynamic": true}'
+
+--------------------------------------------------------------------------------------------------------------------------------
+curl -XPUT 'localhost:9200/stats?pretty=true' -d '{"settings" : {"number_of_shards" : 1, "number_of_replicas" : 0}, "mappings":{"timestamp": { "properties" : { "date" : { "format": "date_time","type": "date"}}}}}'
+
+curl -XPUT 'localhost:9200/stats?pretty=true' -d '{"settings" : {"number_of_shards" : 1, "number_of_replicas" : 0}, "mappings":{"timestamp": {"format": "date_time","type": "date"}}}'
+
+curl -XGET 'localhost:9200/.marvel-es-2016.02.19/_search?pretty=true' -d '{"query" : {"match_all" : {}}, "size" : 1}'
+
+curl -XGET 'localhost:9200/.marvel-es-2016.02.19/_search?pretty=true' -d '{"query" : {"term" : {"DeviceId" : 57}}}'
+
+curl -XGET 'localhost:9200/stats/_search?pretty=true' -d '{"query" : {"term" : {"event" : "questoes.corrigiu"}}, "filter" : {"script" : { "script" : "doc[\"params.resposta\"].value == doc[\"params.correta\"].value"}}, "aggs" : {"device" : {"terms" : {"field" : "DeviceId"}}}}'
+
+curl -XGET 'localhost:9200/stats/_search?pretty=true' -d '{"query" : {"bool" : {"must" : [{"match" : {"event" : "questoes.corrigiu"}}], "filter" : {"script" : { "script" : "doc[\"params.resposta\"].value == doc[\"params.correta\"].value"}}}}, "aggs" : {"device" : {"terms" : {"field" : "DeviceId"}}}}'
+
+curl -XGET 'localhost:9200/stats/_search?pretty=true' -d '{"query": {"bool": {"must": [{"match": {"event": "questoes.corrigiu"}, "match": {"event": "questoes.anterior"} } ] } }, "aggs": {"device": {"terms": {"field": "DeviceId"} } } }'
