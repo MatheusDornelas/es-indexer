@@ -5,7 +5,7 @@ var Uuid = require('uuid');
 var Elasticsearch = require('elasticsearch');
 
 // Qual foi o ultimo id processado da tabela caso queira continuar de onde parou
-var lastProcessed = 0;
+var lastProcessed = 5;
 // Colunas da tabela stats
 //id int(11) - ID numérico autoincremental da tabela
 //uuid binary(16) - UUID que identifica este evento
@@ -15,7 +15,7 @@ var lastProcessed = 0;
 //time timestamp - Timestamp do horário que o evento ocorreu pelo celular do usuário
 //create_date timestamp - Timestamp do horário em que o evento foi registrado no servidor
 
-var select = 'SELECT * FROM stats201403 WHERE id > ' + lastProcessed + ' LIMIT 3;';
+var select = 'SELECT * FROM stats201403 WHERE id > ' + lastProcessed + ' LIMIT 4;';
 
 var elasticsearchClient = new Elasticsearch.Client({
 	host: 'localhost:9200', // Substituir aqui os dados do servidor elasticsearch que estiver rodando
@@ -44,9 +44,7 @@ mysqlConnection.query(select, function(err, rows, fields) {
 	
 	var objects = [];
 	for (x in rows){
-		// O UUID no bd ta como binário, aqui vamos converter pra string
-		var uuid = UuidBase26.encode(Uuid.unparse(rows[x].uuid));
-		
+				
 		// Dá parse no json da coluna params
 		var params = null;
 		
@@ -55,23 +53,29 @@ mysqlConnection.query(select, function(err, rows, fields) {
 		} catch (e) {
 			params = null;
 		}		
-		var	objBody = {
-			DeviceId: rows[x].device_id,
-			event: rows[x].event,
-			params: params,
-			timestamp : new Date()
+		var	object = {
+			id : UuidBase26.encode(Uuid.unparse(rows[x].uuid)), // O UUID no bd ta como binário, aqui vamos converter pra string
+			body : {
+				DeviceId: rows[x].device_id,
+				event: rows[x].event,
+				params: params,
+				timestamp : new Date()				
+			}
+
 		};
-		objects.push(objBody);
-		lastProcessed = rows[x].id;
+		//console.log(object);
+		objects.push(object);
+		//lastProcessed = rows[x].id;
 		//console.log(lastProcessed);
 	}
 	
 	for(y in objects){
+		//console.log(objects);
 		elasticsearchClient.create({
 		  index: 'stats',
 		  type: 'events',
-		  id: uuid,
-		  body: objects[x]
+		  id: objects[y].id,
+		  body: objects[y].body
 		}).then(function (resp) {
 			console.log('Objeto ', resp)
 		}, function (err) {
@@ -81,4 +85,4 @@ mysqlConnection.query(select, function(err, rows, fields) {
 
 });
 
-//mysqlConnection.end();
+mysqlConnection.end();
